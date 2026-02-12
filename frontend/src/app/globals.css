@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+:root {
+  --bg-page: #F5F3EE;
+  --bg-card: #FDFCFA;
+  --bg-warm: #F9F7F3;
+  --text-ink: #1C1917;
+  --text-body: #44403C;
+  --text-caption: #78716C;
+  --text-faint: #A8A29E;
+  --indigo: #4338CA;
+  --indigo-hover: #3730A3;
+  --indigo-light: #E8E6FF;
+  --violet: #7C3AED;
+  --violet-light: #F3EDFF;
+  --teal: #0D9488;
+  --teal-light: #E6FAF7;
+  --amber-warm: #B45309;
+  --amber-light: #FEF7ED;
+  --rose: #BE123C;
+  --rose-light: #FFF1F3;
+  --border: #E7E5E4;
+  --border-light: #F0EDEA;
+  --error: #DC2626;
+  --success: #16A34A;
+}
+
+@theme inline {
+  --color-page: var(--bg-page);
+  --color-card: var(--bg-card);
+  --color-warm: var(--bg-warm);
+  --color-ink: var(--text-ink);
+  --color-body: var(--text-body);
+  --color-caption: var(--text-caption);
+  --color-faint: var(--text-faint);
+  --color-indigo: var(--indigo);
+  --color-indigo-hover: var(--indigo-hover);
+  --color-indigo-light: var(--indigo-light);
+  --color-violet: var(--violet);
+  --color-violet-light: var(--violet-light);
+  --color-teal: var(--teal);
+  --color-teal-light: var(--teal-light);
+  --color-amber-warm: var(--amber-warm);
+  --color-amber-light: var(--amber-light);
+  --color-rose: var(--rose);
+  --color-rose-light: var(--rose-light);
+  --color-border: var(--border);
+  --color-border-light: var(--border-light);
+  --color-error: var(--error);
+  --color-success: var(--success);
+}
+
+body {
+  background-color: var(--bg-page);
+  color: var(--text-ink);
+}
+
+input:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--indigo);
+  box-shadow: 0 0 0 2px rgba(67, 56, 202, 0.2);
+}

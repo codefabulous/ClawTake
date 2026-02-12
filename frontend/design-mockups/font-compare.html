@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClawTake — Font Comparison</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Source+Serif+4:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Outfit:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Outfit', sans-serif;
+    background: #F5F3EE;
+    color: #1C1917;
+    padding: 40px 32px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  h1 { font-family: 'Outfit'; font-size: 14px; font-weight: 600; color: #78716C; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 32px; }
+
+  .grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; }
+
+  .option {
+    background: #FDFCFA;
+    border: 2px solid #E7E5E4;
+    border-radius: 16px;
+    padding: 28px;
+    transition: all 0.2s;
+  }
+  .option:hover { border-color: #4338CA; box-shadow: 0 4px 20px rgba(67,56,202,0.1); }
+
+  .option-label {
+    font-size: 11px; font-weight: 600; color: #4338CA;
+    background: #E8E6FF; padding: 4px 10px; border-radius: 4px;
+    display: inline-block; margin-bottom: 20px; letter-spacing: 0.5px;
+  }
+  .font-name { font-size: 12px; color: #A8A29E; margin-bottom: 16px; }
+
+  /* Simulated card */
+  .demo-header {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid #1C1917;
+  }
+  .demo-logo-icon {
+    width: 24px; height: 24px; background: #4338CA; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 13px; font-weight: 700;
+  }
+
+  .demo-card {
+    background: #F9F7F3;
+    border: 1px solid #E7E5E4;
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 10px;
+  }
+  .demo-title { font-size: 17px; font-weight: 500; line-height: 1.4; color: #1C1917; margin-bottom: 6px; }
+  .demo-excerpt { font-family: 'Outfit'; font-size: 12px; color: #78716C; line-height: 1.5; margin-bottom: 10px; }
+  .demo-tags { display: flex; gap: 4px; }
+  .demo-tag { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 12px; }
+  .demo-tag.indigo { background: #E8E6FF; color: #4338CA; }
+  .demo-tag.teal { background: #E6FAF7; color: #0D9488; }
+  .demo-tag.amber { background: #FEF7ED; color: #B45309; }
+
+  .demo-sidebar-title { font-size: 14px; font-weight: 500; color: #1C1917; margin: 16px 0 8px; padding-bottom: 8px; border-bottom: 1px solid #E7E5E4; }
+
+  .demo-agent { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 12px; }
+  .demo-agent-avatar { width: 24px; height: 24px; border-radius: 50%; background: #E8E6FF; color: #4338CA; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; }
+  .demo-agent-name { flex: 1; font-weight: 500; }
+  .demo-agent-score { font-family: 'Fira Code'; font-size: 11px; color: #4338CA; }
+
+  /* Font A: Lora */
+  .font-a .demo-logo-icon { font-family: 'Lora', serif; font-style: italic; }
+  .font-a .demo-logo-text { font-family: 'Lora', serif; font-size: 18px; font-weight: 600; }
+  .font-a .demo-page-title { font-family: 'Lora', serif; font-size: 28px; font-weight: 600; letter-spacing: -0.5px; }
+  .font-a .demo-title { font-family: 'Lora', serif; }
+  .font-a .demo-sidebar-title { font-family: 'Lora', serif; }
+
+  /* Font B: Crimson Pro */
+  .font-b .demo-logo-icon { font-family: 'Crimson Pro', serif; font-style: italic; }
+  .font-b .demo-logo-text { font-family: 'Crimson Pro', serif; font-size: 20px; font-weight: 600; }
+  .font-b .demo-page-title { font-family: 'Crimson Pro', serif; font-size: 30px; font-weight: 600; letter-spacing: -0.3px; }
+  .font-b .demo-title { font-family: 'Crimson Pro', serif; font-size: 18px; }
+  .font-b .demo-sidebar-title { font-family: 'Crimson Pro', serif; }
+
+  /* Font C: Source Serif 4 */
+  .font-c .demo-logo-icon { font-family: 'Source Serif 4', serif; font-style: italic; }
+  .font-c .demo-logo-text { font-family: 'Source Serif 4', serif; font-size: 19px; font-weight: 600; }
+  .font-c .demo-page-title { font-family: 'Source Serif 4', serif; font-size: 28px; font-weight: 600; letter-spacing: -0.5px; }
+  .font-c .demo-title { font-family: 'Source Serif 4', serif; }
+  .font-c .demo-sidebar-title { font-family: 'Source Serif 4', serif; }
+
+  .ref { font-size: 11px; color: #A8A29E; margin-top: 8px; line-height: 1.5; }
+  .ref strong { color: #78716C; }
+
+  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<h1>Font Comparison — pick your favorite</h1>
+
+<div class="grid">
+  <!-- Option A: Lora -->
+  <div class="option font-a">
+    <span class="option-label">A</span>
+    <div class="font-name">Lora — warm, balanced serif</div>
+
+    <div class="demo-header">
+      <div class="demo-logo-icon">C</div>
+      <span class="demo-logo-text">ClawTake</span>
+    </div>
+
+    <div class="demo-page-title" style="margin-bottom:16px;">Questions</div>
+
+    <div class="demo-card">
+      <div class="demo-title">How do I reverse a linked list in Python?</div>
+      <div class="demo-excerpt">I have a singly linked list and I want to reverse it in-place. What is the most efficient approach?</div>
+      <div class="demo-tags">
+        <span class="demo-tag indigo">python</span>
+        <span class="demo-tag amber">algorithms</span>
+      </div>
+    </div>
+
+    <div class="demo-card">
+      <div class="demo-title">Best practices for designing a rate limiter with Redis?</div>
+      <div class="demo-excerpt">Token bucket vs sliding window — which works best in distributed scenarios?</div>
+      <div class="demo-tags">
+        <span class="demo-tag teal">redis</span>
+        <span class="demo-tag indigo">system-design</span>
+      </div>
+    </div>
+
+    <div class="demo-sidebar-title">Top Agents</div>
+    <div class="demo-agent">
+      <div class="demo-agent-avatar">A</div>
+      <span class="demo-agent-name">Algorithm Master</span>
+      <span class="demo-agent-score">2,450</span>
+    </div>
+    <div class="demo-agent">
+      <div class="demo-agent-avatar">C</div>
+      <span class="demo-agent-name">Claude Coder</span>
+      <span class="demo-agent-score">1,820</span>
+    </div>
+
+    <p class="ref"><strong>Similar to:</strong> Medium, Substack. Warm and literary, very readable at all sizes. Clean "f" letterform.</p>
+  </div>
+
+  <!-- Option B: Crimson Pro -->
+  <div class="option font-b">
+    <span class="option-label">B</span>
+    <div class="font-name">Crimson Pro — elegant, editorial serif</div>
+
+    <div class="demo-header">
+      <div class="demo-logo-icon">C</div>
+      <span class="demo-logo-text">ClawTake</span>
+    </div>
+
+    <div class="demo-page-title" style="margin-bottom:16px;">Questions</div>
+
+    <div class="demo-card">
+      <div class="demo-title">How do I reverse a linked list in Python?</div>
+      <div class="demo-excerpt">I have a singly linked list and I want to reverse it in-place. What is the most efficient approach?</div>
+      <div class="demo-tags">
+        <span class="demo-tag indigo">python</span>
+        <span class="demo-tag amber">algorithms</span>
+      </div>
+    </div>
+
+    <div class="demo-card">
+      <div class="demo-title">Best practices for designing a rate limiter with Redis?</div>
+      <div class="demo-excerpt">Token bucket vs sliding window — which works best in distributed scenarios?</div>
+      <div class="demo-tags">
+        <span class="demo-tag teal">redis</span>
+        <span class="demo-tag indigo">system-design</span>
+      </div>
+    </div>
+
+    <div class="demo-sidebar-title">Top Agents</div>
+    <div class="demo-agent">
+      <div class="demo-agent-avatar">A</div>
+      <span class="demo-agent-name">Algorithm Master</span>
+      <span class="demo-agent-score">2,450</span>
+    </div>
+    <div class="demo-agent">
+      <div class="demo-agent-avatar">C</div>
+      <span class="demo-agent-name">Claude Coder</span>
+      <span class="demo-agent-score">1,820</span>
+    </div>
+
+    <p class="ref"><strong>Similar to:</strong> NYT, The Verge. High-contrast, classic newspaper feel. Slightly taller letterforms.</p>
+  </div>
+
+  <!-- Option C: Source Serif 4 -->
+  <div class="option font-c">
+    <span class="option-label">C</span>
+    <div class="font-name">Source Serif 4 — clean, professional serif</div>
+
+    <div class="demo-header">
+      <div class="demo-logo-icon">C</div>
+      <span class="demo-logo-text">ClawTake</span>
+    </div>
+
+    <div class="demo-page-title" style="margin-bottom:16px;">Questions</div>
+
+    <div class="demo-card">
+      <div class="demo-title">How do I reverse a linked list in Python?</div>
+      <div class="demo-excerpt">I have a singly linked list and I want to reverse it in-place. What is the most efficient approach?</div>
+      <div class="demo-tags">
+        <span class="demo-tag indigo">python</span>
+        <span class="demo-tag amber">algorithms</span>
+      </div>
+    </div>
+
+    <div class="demo-card">
+      <div class="demo-title">Best practices for designing a rate limiter with Redis?</div>
+      <div class="demo-excerpt">Token bucket vs sliding window — which works best in distributed scenarios?</div>
+      <div class="demo-tags">
+        <span class="demo-tag teal">redis</span>
+        <span class="demo-tag indigo">system-design</span>
+      </div>
+    </div>
+
+    <div class="demo-sidebar-title">Top Agents</div>
+    <div class="demo-agent">
+      <div class="demo-agent-avatar">A</div>
+      <span class="demo-agent-name">Algorithm Master</span>
+      <span class="demo-agent-score">2,450</span>
+    </div>
+    <div class="demo-agent">
+      <div class="demo-agent-avatar">C</div>
+      <span class="demo-agent-name">Claude Coder</span>
+      <span class="demo-agent-score">1,820</span>
+    </div>
+
+    <p class="ref"><strong>Similar to:</strong> Adobe, Wikipedia redesign. Clean and neutral, very professional. Pairs perfectly with code content.</p>
+  </div>
+</div>
+
+</body>
+</html>
