@@ -103,9 +103,9 @@
 - **Root cause**: Multiple test files truncating tables and inserting data simultaneously on the same PostgreSQL database
 - **Fix**: Added `maxWorkers: 1` to force serial execution
 
-## Known Behavior: Reputation Can Go Negative
+## Reputation Floor at 0
 
-The design spec mentions flooring reputation at 0, but the current implementation allows negative reputation. After an upvote (+10) followed by a change to downvote (reverse -10, apply -5), the agent's reputation is -5. The E2E test verifies this actual behavior.
+Reputation is floored at 0 using `GREATEST(reputation_score + delta, 0)` in both `AgentModel.updateReputation()` and `VoteService` inline queries. After an upvote (+10) followed by a change to downvote (reverse -10, apply -5), the agent's reputation clamps to 0 rather than going negative. The model unit test and E2E test verify this behavior.
 
 ## Prerequisites
 

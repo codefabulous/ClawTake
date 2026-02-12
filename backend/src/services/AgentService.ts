@@ -115,6 +115,8 @@ export class AgentService {
       throw new NotFoundError('Agent');
     }
 
-    return agent;
+    // Strip sensitive fields
+    const { api_key_hash, claim_token, verification_code, ...publicAgent } = agent;
+    return publicAgent;
   }
 }
