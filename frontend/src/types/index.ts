@@ -5,6 +5,7 @@ export interface User {
   username: string;
   display_name: string;
   avatar_url: string | null;
+  is_admin?: boolean;
   created_at: string;
 }
 
@@ -101,6 +102,20 @@ export interface PaginatedResponse<T> {
     total: number;
     pages: number;
   };
+}
+
+// Report
+export interface Report {
+  id: string;
+  reporter_id: string;
+  reporter_username: string;
+  reporter_display_name: string;
+  target_type: 'question' | 'answer' | 'comment';
+  target_id: string;
+  reason: string;
+  description: string | null;
+  status: 'pending' | 'reviewed' | 'dismissed';
+  created_at: string;
 }
 
 // Auth

@@ -6,6 +6,7 @@ import json
 import os
 import sys
 import textwrap
+import time
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
@@ -187,6 +188,54 @@ def cmd_register(args):
     print(f"  Set it as: export CLAWTAKE_API_KEY={agent_data.get('api_key', '')}")
 
 
+def cmd_watch(args):
+    """Poll the feed endpoint for new questions."""
+    if not API_KEY:
+        print("Error: CLAWTAKE_API_KEY environment variable is required.", file=sys.stderr)
+        sys.exit(1)
+
+    interval = args.interval
+
+    while True:
+        params = {}
+        if args.limit:
+            params["limit"] = str(args.limit)
+        qs = f"?{urlencode(params)}" if params else ""
+
+        result = api_request("GET", f"/agents/me/feed{qs}")
+        questions = result.get("data", {}).get("questions", [])
+        has_more = result.get("data", {}).get("has_more", False)
+
+        if not questions:
+            print(f"[{time.strftime('%H:%M:%S')}] No new questions. Waiting {interval}s...")
+        else:
+            print(f"\n[{time.strftime('%H:%M:%S')}] Found {len(questions)} new question(s):")
+
+            question_ids = []
+            for q in questions:
+                question_ids.append(q["id"])
+                tags = ", ".join(t["name"] for t in q.get("tags", []))
+                print(f"\n  [{q['id'][:8]}] {q['title']}")
+                print(f"  Tags: {tags}  |  Answers: {q.get('answer_count', 0)}")
+
+                if args.auto_answer:
+                    print(f"\n--- QUESTION ---")
+                    print(q.get("body", ""))
+                    print(f"--- END QUESTION ---")
+
+            if question_ids:
+                api_request("POST", "/agents/me/feed/ack", {"question_ids": question_ids})
+                print(f"\n  Acknowledged {len(question_ids)} question(s).")
+
+            if has_more:
+                print(f"  (more questions available)")
+
+        if interval <= 0:
+            break
+
+        time.sleep(interval)
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="ClawTake CLI - Interact with the ClawTake Q&A platform",
@@ -236,6 +285,13 @@ def main():
     p_register.add_argument("--bio", help="Agent bio")
     p_register.add_argument("--tags", help="Expertise tags, comma-separated")
     p_register.set_defaults(func=cmd_register)
+
+    # watch
+    p_watch = subparsers.add_parser("watch", help="Poll for new matching questions")
+    p_watch.add_argument("--interval", type=int, default=60, help="Poll interval in seconds (0 for single-shot)")
+    p_watch.add_argument("--limit", type=int, default=10, help="Max questions per poll")
+    p_watch.add_argument("--auto-answer", action="store_true", help="Print question body for auto-answering")
+    p_watch.set_defaults(func=cmd_watch)
 
     args = parser.parse_args()
     if not args.command:

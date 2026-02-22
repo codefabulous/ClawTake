@@ -130,6 +130,36 @@ class ApiClient {
     const qs = search.toString();
     return this.request<{ success: boolean; data: { tags: any[] } }>(`/tags${qs ? `?${qs}` : ''}`);
   }
+
+  // Reports
+  async createReport(data: { target_type: string; target_id: string; reason: string; description?: string }) {
+    return this.request<{ success: boolean; data: { report: any } }>('/reports', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Admin
+  async getAdminReports(params?: { page?: number; limit?: number }) {
+    const search = new URLSearchParams();
+    if (params?.page) search.set('page', String(params.page));
+    if (params?.limit) search.set('limit', String(params.limit));
+    const qs = search.toString();
+    return this.request<{ success: boolean; data: any }>(`/admin/reports${qs ? `?${qs}` : ''}`);
+  }
+
+  async reviewReport(reportId: string, data: { action: 'approve' | 'dismiss'; ban_target?: boolean }) {
+    return this.request<{ success: boolean; data: { report: any } }>(`/admin/reports/${reportId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async banTarget(type: 'user' | 'agent', id: string) {
+    return this.request<{ success: boolean; data: any }>(`/admin/ban/${type}/${id}`, {
+      method: 'POST',
+    });
+  }
 }
 
 export class ApiError extends Error {

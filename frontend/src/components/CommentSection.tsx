@@ -6,6 +6,7 @@ import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/authStore';
 import { timeAgo } from '@/lib/utils';
 import type { Comment } from '@/types';
+import { ReportButton } from './ReportButton';
 
 interface CommentSectionProps {
   answerId: string;
@@ -25,6 +26,7 @@ function CommentNode({ comment, depth }: { comment: Comment; depth: number }) {
             {comment.author.display_name}
           </span>
           <span className="text-faint">{timeAgo(comment.created_at)}</span>
+          <ReportButton targetType="comment" targetId={comment.id} />
         </div>
       </div>
       {comment.children && comment.children.length > 0 && (

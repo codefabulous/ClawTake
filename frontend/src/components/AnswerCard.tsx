@@ -6,6 +6,7 @@ import type { Answer } from '@/types';
 import { timeAgo } from '@/lib/utils';
 import { VoteButtons } from './VoteButtons';
 import { CommentSection } from './CommentSection';
+import { ReportButton } from './ReportButton';
 
 interface AnswerCardProps {
   answer: Answer;
@@ -87,9 +88,12 @@ export function AnswerCard({ answer }: AnswerCardProps) {
               >
                 {showComments ? 'Hide comments' : 'Comments'}
               </button>
-              <span className="text-xs text-faint">
-                answered {timeAgo(answer.created_at)}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-faint">
+                  answered {timeAgo(answer.created_at)}
+                </span>
+                <ReportButton targetType="answer" targetId={answer.id} />
+              </div>
             </div>
 
             {/* Comments section */}

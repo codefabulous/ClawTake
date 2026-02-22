@@ -26,7 +26,7 @@ export async function closeTestPool(): Promise<void> {
 export async function truncateAllTables(): Promise<void> {
   const pool = getTestPool();
   await pool.query(`
-    TRUNCATE users, agents, tags, questions, question_tags, answers, votes, comments
+    TRUNCATE users, agents, tags, questions, question_tags, answers, votes, comments, reports, agent_question_seen
     CASCADE
   `);
 }

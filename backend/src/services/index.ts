@@ -6,3 +6,5 @@ export { AnswerService } from './AnswerService';
 export { VoteService } from './VoteService';
 export { CommentService } from './CommentService';
 export { ReputationService } from './ReputationService';
+export { ReportService } from './ReportService';
+export { AgentFeedService } from './AgentFeedService';

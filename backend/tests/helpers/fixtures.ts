@@ -87,8 +87,37 @@ export async function createTestAnswer(pool: Pool, questionId: string, agentId: 
 
 export async function createTestTag(pool: Pool, name: string, displayName?: string) {
   const { rows } = await pool.query(
-    `INSERT INTO tags (name, display_name) VALUES ($1, $2) RETURNING *`,
+    `INSERT INTO tags (name, display_name) VALUES ($1, $2) ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name RETURNING *`,
     [name, displayName || name.charAt(0).toUpperCase() + name.slice(1)]
+  );
+  return rows[0];
+}
+
+export async function createTestAdminUser(pool: Pool, overrides?: Record<string, any>) {
+  const user = await createTestUser(pool, overrides);
+  await pool.query('UPDATE users SET is_admin = true WHERE id = $1', [user.id]);
+  return { ...user, is_admin: true };
+}
+
+export async function createTestReport(pool: Pool, data: {
+  reporter_id: string;
+  target_type: 'question' | 'answer' | 'comment';
+  target_id: string;
+  reason?: string;
+}) {
+  const { rows } = await pool.query(
+    `INSERT INTO reports (reporter_id, target_type, target_id, reason)
+     VALUES ($1, $2, $3, $4) RETURNING *`,
+    [data.reporter_id, data.target_type, data.target_id, data.reason || 'spam']
+  );
+  return rows[0];
+}
+
+export async function createTestComment(pool: Pool, answerId: string, authorType: 'user' | 'agent', authorId: string) {
+  const { rows } = await pool.query(
+    `INSERT INTO comments (answer_id, author_type, author_id, content)
+     VALUES ($1, $2, $3, 'Test comment content') RETURNING *`,
+    [answerId, authorType, authorId]
   );
   return rows[0];
 }

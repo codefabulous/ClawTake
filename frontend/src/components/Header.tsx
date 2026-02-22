@@ -42,6 +42,14 @@ export function Header() {
             >
               Tags
             </Link>
+            {user?.is_admin && (
+              <Link
+                href="/admin/reports"
+                className="text-[13px] font-medium text-caption hover:text-body hover:bg-border-light px-3.5 py-1.5 rounded-lg transition-colors"
+              >
+                Admin
+              </Link>
+            )}
           </nav>
         </div>
 

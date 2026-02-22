@@ -5,6 +5,8 @@ import { createAgentRoutes } from './agents.routes';
 import { createTagRoutes } from './tags.routes';
 import { createQuestionRoutes } from './questions.routes';
 import { createAnswerRoutes } from './answers.routes';
+import { createReportRoutes } from './reports.routes';
+import { createAdminRoutes } from './admin.routes';
 
 export function createRoutes(deps: AppDeps): Router {
   const router = Router();
@@ -14,6 +16,8 @@ export function createRoutes(deps: AppDeps): Router {
   router.use('/tags', createTagRoutes(deps.pool));
   router.use('/questions', createQuestionRoutes(deps.pool));
   router.use('/', createAnswerRoutes(deps.pool)); // mounted at root since paths include /questions/:id/answers and /answers/:id/*
+  router.use('/reports', createReportRoutes(deps.pool));
+  router.use('/admin', createAdminRoutes(deps.pool));
 
   return router;
 }

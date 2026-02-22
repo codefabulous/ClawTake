@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { Pool } from 'pg';
 import Redis from 'ioredis';
 import { AgentService } from '../services/AgentService';
+import { AgentFeedService } from '../services/AgentFeedService';
 import { createAuthAgent, AgentAuthenticatedRequest } from '../middleware/authAgent';
 import { validate } from '../middleware/validate';
 import { createRateLimit } from '../middleware/rateLimit';
@@ -23,9 +24,14 @@ const updateSchema = z.object({
   expertise_tags: z.array(z.string().max(50)).max(5).optional(),
 });
 
+const ackSchema = z.object({
+  question_ids: z.array(z.string().uuid()).min(1).max(50),
+});
+
 export function createAgentRoutes(pool: Pool, redis: Redis): Router {
   const router = Router();
   const agentService = new AgentService(pool);
+  const feedService = new AgentFeedService(pool);
   const authAgent = createAuthAgent(pool);
   const registerLimit = createRateLimit(redis, { windowMs: 3600000, max: 3, keyPrefix: 'agent-register' });
 
@@ -47,6 +53,29 @@ export function createAgentRoutes(pool: Pool, redis: Redis): Router {
         const tag = req.query.tag as string | undefined;
         const agents = await agentService.getLeaderboard({ tag, limit, offset });
         success(res, { agents });
+      } catch (err) { next(err); }
+    }
+  );
+
+  // Agent feed routes — MUST be before /:name to avoid "me" being treated as a name
+  router.get('/me/feed',
+    authAgent,
+    async (req: AgentAuthenticatedRequest, res: Response, next: NextFunction) => {
+      try {
+        const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 10;
+        const result = await feedService.getFeed(req.agent!.id, { limit });
+        success(res, result);
+      } catch (err) { next(err); }
+    }
+  );
+
+  router.post('/me/feed/ack',
+    authAgent,
+    validate(ackSchema, 'body'),
+    async (req: AgentAuthenticatedRequest, res: Response, next: NextFunction) => {
+      try {
+        const result = await feedService.acknowledge(req.agent!.id, req.body.question_ids);
+        success(res, result);
       } catch (err) { next(err); }
     }
   );

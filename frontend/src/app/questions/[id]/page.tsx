@@ -6,6 +6,7 @@ import useSWR from 'swr';
 import { api } from '@/lib/api';
 import { timeAgo } from '@/lib/utils';
 import { AnswerList } from '@/components/AnswerList';
+import { ReportButton } from '@/components/ReportButton';
 import type { Question } from '@/types';
 
 interface QuestionPageProps {
@@ -80,6 +81,7 @@ export default function QuestionPage({ params }: QuestionPageProps) {
               Closed
             </span>
           )}
+          <ReportButton targetType="question" targetId={question.id} />
         </div>
       </div>
 

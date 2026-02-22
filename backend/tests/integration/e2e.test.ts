@@ -393,4 +393,141 @@ describe('End-to-end: full user journey', () => {
     expect(finalDetailRes.body.data.question.answer_count).toBe(2);
     expect(finalDetailRes.body.data.question.view_count).toBeGreaterThanOrEqual(1);
   });
+
+  test('E2E: Report → auto-hide → admin review flow', async () => {
+    // 1. Create a question
+    const userRes = await request(app)
+      .post('/api/auth/register')
+      .send({ email: 'author@test.com', username: 'author', password: 'testpass123', display_name: 'Author' });
+    const authorToken = userRes.body.data.token;
+
+    const askRes = await request(app)
+      .post('/api/questions')
+      .set('Authorization', `Bearer ${authorToken}`)
+      .send({ title: 'A question that will be reported for testing', body: 'This question body has enough content for validation purposes.', tags: ['general'] });
+    expect(askRes.status).toBe(201);
+    const questionId = askRes.body.data.question.id;
+
+    // 2. Three different users report it
+    const reporters: string[] = [];
+    for (let i = 0; i < 3; i++) {
+      const regRes = await request(app)
+        .post('/api/auth/register')
+        .send({ email: `reporter${i}@test.com`, username: `reporter${i}`, password: 'testpass123', display_name: `Reporter ${i}` });
+      reporters.push(regRes.body.data.token);
+    }
+
+    for (const token of reporters) {
+      const reportRes = await request(app)
+        .post('/api/reports')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ target_type: 'question', target_id: questionId, reason: 'spam' });
+      expect(reportRes.status).toBe(201);
+    }
+
+    // 3. Verify question is auto-hidden (GET returns 404)
+    const hiddenRes = await request(app).get(`/api/questions/${questionId}`);
+    expect(hiddenRes.status).toBe(404);
+
+    // 4. Admin reviews (approve) → question stays deleted
+    const adminRes = await request(app)
+      .post('/api/auth/register')
+      .send({ email: 'admin@test.com', username: 'admin', password: 'adminpass123', display_name: 'Admin' });
+    const adminToken = adminRes.body.data.token;
+    const adminId = adminRes.body.data.user.id;
+    await pool.query('UPDATE users SET is_admin = true WHERE id = $1', [adminId]);
+
+    // Get pending reports
+    const pendingRes = await request(app)
+      .get('/api/admin/reports')
+      .set('Authorization', `Bearer ${adminToken}`);
+    expect(pendingRes.status).toBe(200);
+    expect(pendingRes.body.data.items.length).toBe(3);
+
+    const reportId = pendingRes.body.data.items[0].id;
+    const approveRes = await request(app)
+      .patch(`/api/admin/reports/${reportId}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ action: 'approve' });
+    expect(approveRes.status).toBe(200);
+
+    // All reports for this target should now be reviewed
+    const afterApproveRes = await request(app)
+      .get('/api/admin/reports')
+      .set('Authorization', `Bearer ${adminToken}`);
+    expect(afterApproveRes.body.data.items.length).toBe(0);
+
+    // Question still hidden
+    const stillHiddenRes = await request(app).get(`/api/questions/${questionId}`);
+    expect(stillHiddenRes.status).toBe(404);
+  });
+
+  test('E2E: Agent feed → acknowledge → answer flow', async () => {
+    // 1. Create user and question with tags
+    const userRes = await request(app)
+      .post('/api/auth/register')
+      .send({ email: 'asker@test.com', username: 'asker', password: 'testpass123', display_name: 'Asker' });
+    const askerToken = userRes.body.data.token;
+
+    const askRes = await request(app)
+      .post('/api/questions')
+      .set('Authorization', `Bearer ${askerToken}`)
+      .send({ title: 'How to write unit tests in JavaScript?', body: 'I want to learn how to write proper unit tests for my JavaScript projects.', tags: ['javascript', 'testing'] });
+    expect(askRes.status).toBe(201);
+    const questionId = askRes.body.data.question.id;
+
+    // 2. Register agent with matching expertise tags
+    const agentRegRes = await request(app)
+      .post('/api/agents/register')
+      .send({ name: 'js-tester', display_name: 'JS Test Expert', expertise_tags: ['javascript', 'testing'] });
+    expect(agentRegRes.status).toBe(201);
+    const agentKey = agentRegRes.body.data.api_key;
+    await pool.query("UPDATE agents SET status = 'active', is_claimed = true WHERE name = 'js-tester'");
+
+    // 3. Agent polls feed → question appears
+    const feedRes = await request(app)
+      .get('/api/agents/me/feed')
+      .set('X-Agent-Key', agentKey);
+    expect(feedRes.status).toBe(200);
+    expect(feedRes.body.data.questions.length).toBe(1);
+    expect(feedRes.body.data.questions[0].id).toBe(questionId);
+
+    // 4. Agent acknowledges the question
+    const ackRes = await request(app)
+      .post('/api/agents/me/feed/ack')
+      .set('X-Agent-Key', agentKey)
+      .send({ question_ids: [questionId] });
+    expect(ackRes.status).toBe(200);
+    expect(ackRes.body.data.acknowledged).toBe(1);
+
+    // 5. Agent polls again → no questions (acknowledged)
+    const feed2Res = await request(app)
+      .get('/api/agents/me/feed')
+      .set('X-Agent-Key', agentKey);
+    expect(feed2Res.status).toBe(200);
+    expect(feed2Res.body.data.questions.length).toBe(0);
+
+    // 6. Agent posts an answer
+    const answerRes = await request(app)
+      .post(`/api/questions/${questionId}/answers`)
+      .set('X-Agent-Key', agentKey)
+      .send({ content: 'Use Jest for unit testing. Here is how to set it up...' });
+    expect(answerRes.status).toBe(201);
+
+    // 7. Create another question with matching tags
+    const ask2Res = await request(app)
+      .post('/api/questions')
+      .set('Authorization', `Bearer ${askerToken}`)
+      .send({ title: 'What is the best JavaScript testing framework?', body: 'I need to choose a testing framework for my new JavaScript project.', tags: ['javascript'] });
+    expect(ask2Res.status).toBe(201);
+    const question2Id = ask2Res.body.data.question.id;
+
+    // 8. Agent polls again → only new question appears (not the answered/acknowledged one)
+    const feed3Res = await request(app)
+      .get('/api/agents/me/feed')
+      .set('X-Agent-Key', agentKey);
+    expect(feed3Res.status).toBe(200);
+    expect(feed3Res.body.data.questions.length).toBe(1);
+    expect(feed3Res.body.data.questions[0].id).toBe(question2Id);
+  });
 });
