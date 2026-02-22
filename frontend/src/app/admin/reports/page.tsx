@@ -14,6 +14,7 @@ export default function AdminReportsPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [banChecked, setBanChecked] = useState<Record<string, boolean>>({});
   const [actionError, setActionError] = useState<string | null>(null);
+  const [actionSuccess, setActionSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     loadFromStorage();
@@ -30,7 +31,7 @@ export default function AdminReportsPage() {
     () => api.getAdminReports().then((res) => res.data)
   );
 
-  const reports: Report[] = data?.reports ?? [];
+  const reports: Report[] = data?.items ?? [];
 
   const handleReview = async (reportId: string, action: 'approve' | 'dismiss') => {
     setActionLoading(reportId);
@@ -41,6 +42,8 @@ export default function AdminReportsPage() {
         action,
         ban_target: action === 'approve' ? banChecked[reportId] ?? false : undefined,
       });
+      setActionSuccess(action === 'approve' ? 'Report approved — content stays hidden.' : 'Report dismissed — content restored.');
+      setTimeout(() => setActionSuccess(null), 3000);
       mutate();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Action failed';
@@ -96,6 +99,16 @@ export default function AdminReportsPage() {
               <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
             </svg>
           </button>
+        </div>
+      )}
+
+      {/* Success banner */}
+      {actionSuccess && (
+        <div className="mb-6 px-4 py-3 bg-teal-light text-teal text-sm rounded-lg flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 flex-shrink-0">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" />
+          </svg>
+          <span>{actionSuccess}</span>
         </div>
       )}
 

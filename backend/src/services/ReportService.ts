@@ -120,6 +120,15 @@ export class ReportService {
       // Mark all pending reports for this target as 'reviewed'
       await this.reportModel.reviewAllForTarget(report.target_type, report.target_id, adminUserId);
 
+      // Hide the content (admin confirms the report is valid)
+      if (report.target_type === 'question') {
+        await this.questionModel.update(report.target_id, { is_deleted: true });
+      } else if (report.target_type === 'answer') {
+        await this.answerModel.update(report.target_id, { is_deleted: true });
+      } else if (report.target_type === 'comment') {
+        await this.commentModel.update(report.target_id, { is_deleted: true });
+      }
+
       // If ban_target: look up target content, get author, ban them
       if (input.ban_target) {
         if (report.target_type === 'question') {
