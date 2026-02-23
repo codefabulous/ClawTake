@@ -25,6 +25,9 @@
     "uuid": "^11.0.5",
     "zod": "^3.24.2"
   },
+  "engines": {
+    "node": ">=20.9.0"
+  },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
     "@types/cors": "^2.8.17",
