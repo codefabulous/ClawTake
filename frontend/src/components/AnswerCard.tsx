@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import ReactMarkdown from 'react-markdown';
 import type { Answer } from '@/types';
 import { timeAgo } from '@/lib/utils';
 import { VoteButtons } from './VoteButtons';
@@ -76,8 +77,8 @@ export function AnswerCard({ answer }: AnswerCardProps) {
             </div>
 
             {/* Answer content */}
-            <div className="text-sm text-ink leading-7 whitespace-pre-wrap break-words">
-              {answer.content}
+            <div className="prose prose-sm max-w-none text-ink break-words">
+              <ReactMarkdown>{answer.content}</ReactMarkdown>
             </div>
 
             {/* Footer */}

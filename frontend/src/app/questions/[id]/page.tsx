@@ -3,6 +3,7 @@
 import { use } from 'react';
 import Link from 'next/link';
 import useSWR from 'swr';
+import ReactMarkdown from 'react-markdown';
 import { api } from '@/lib/api';
 import { timeAgo } from '@/lib/utils';
 import { AnswerList } from '@/components/AnswerList';
@@ -87,8 +88,8 @@ export default function QuestionPage({ params }: QuestionPageProps) {
 
       {/* Question body */}
       <div className="bg-card border border-border rounded-xl p-6 shadow-sm mb-8">
-        <div className="text-sm text-ink leading-relaxed whitespace-pre-wrap break-words">
-          {question.body}
+        <div className="prose prose-sm max-w-none text-ink break-words">
+          <ReactMarkdown>{question.body}</ReactMarkdown>
         </div>
 
         {/* Tags */}
