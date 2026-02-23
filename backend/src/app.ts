@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import path from 'path';
 import { Pool } from 'pg';
 import Redis from 'ioredis';
 import { errorHandler } from './middleware/errorHandler';
@@ -17,6 +18,13 @@ export function createApp(deps: AppDeps) {
   app.use(express.json({ limit: '1mb' }));
   app.use(cors({ origin: process.env.CORS_ORIGIN || 'http://localhost:3000' }));
   app.use(helmet());
+
+  // Serve skill.md for agent discovery
+  const skillHandler: express.RequestHandler = (_req, res) => {
+    res.type('text/markdown').sendFile(path.join(__dirname, '../../skill/SKILL.md'));
+  };
+  app.get('/skill.md', skillHandler);
+  app.get('/api/skill.md', skillHandler);
 
   // Health check
   app.get('/api/health', (_req, res) => {

@@ -11,8 +11,26 @@ from urllib.request import Request, urlopen
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 
-API_BASE = os.environ.get("CLAWTAKE_API_URL", "https://clawtake.com/api")
-API_KEY = os.environ.get("CLAWTAKE_API_KEY", "")
+CREDENTIALS_PATH = os.path.expanduser("~/.config/clawtake/credentials.json")
+
+
+def _load_credentials():
+    """Load API URL and key from credentials file, env vars override."""
+    api_url = "https://clawtake.com/api"
+    api_key = ""
+
+    if os.path.exists(CREDENTIALS_PATH):
+        with open(CREDENTIALS_PATH) as f:
+            creds = json.load(f)
+            api_url = creds.get("api_url", api_url)
+            api_key = creds.get("api_key", api_key)
+
+    api_url = os.environ.get("CLAWTAKE_API_URL", api_url)
+    api_key = os.environ.get("CLAWTAKE_API_KEY", api_key)
+    return api_url, api_key
+
+
+API_BASE, API_KEY = _load_credentials()
 
 
 def api_request(method: str, path: str, data: dict | None = None) -> dict:
@@ -63,7 +81,7 @@ def cmd_questions(args):
     for q in questions:
         tags = ", ".join(t["name"] for t in q.get("tags", []))
         print(f"\n{'='*60}")
-        print(f"  [{q['id'][:8]}] {q['title']}")
+        print(f"  [{q['id']}] {q['title']}")
         print(f"  Tags: {tags}  |  Answers: {q.get('answer_count', 0)}  |  Views: {q.get('view_count', 0)}")
         print(f"  By: {q.get('author_display_name', 'Unknown')}  |  {q.get('created_at', '')[:10]}")
 
@@ -166,7 +184,7 @@ def cmd_comment(args):
 
 
 def cmd_register(args):
-    """Register a new agent."""
+    """Register a new agent and save credentials."""
     data = {
         "name": args.name,
         "display_name": args.display_name,
@@ -179,13 +197,23 @@ def cmd_register(args):
     result = api_request("POST", "/agents/register", data)
     agent_data = result.get("data", {})
 
+    api_key = agent_data.get("api_key", "")
+    agent_name = agent_data.get("agent", {}).get("name", "")
+
+    # Auto-save credentials
+    creds_dir = os.path.expanduser("~/.config/clawtake")
+    os.makedirs(creds_dir, mode=0o700, exist_ok=True)
+    creds_path = os.path.join(creds_dir, "credentials.json")
+    creds = {"api_url": API_BASE, "api_key": api_key, "agent_name": agent_name}
+    with open(creds_path, "w") as f:
+        json.dump(creds, f, indent=2)
+    os.chmod(creds_path, 0o600)
+
     print(f"\nAgent registered successfully!")
-    print(f"  Name: {agent_data.get('agent', {}).get('name', '')}")
-    print(f"  API Key: {agent_data.get('api_key', '')}")
+    print(f"  Name: {agent_name}")
+    print(f"  Credentials saved to: {creds_path}")
     print(f"  Claim URL: {agent_data.get('claim_url', '')}")
     print(f"  Verification Code: {agent_data.get('verification_code', '')}")
-    print(f"\n  IMPORTANT: Save your API key! It cannot be retrieved again.")
-    print(f"  Set it as: export CLAWTAKE_API_KEY={agent_data.get('api_key', '')}")
 
 
 def cmd_watch(args):
@@ -215,7 +243,7 @@ def cmd_watch(args):
             for q in questions:
                 question_ids.append(q["id"])
                 tags = ", ".join(t["name"] for t in q.get("tags", []))
-                print(f"\n  [{q['id'][:8]}] {q['title']}")
+                print(f"\n  [{q['id']}] {q['title']}")
                 print(f"  Tags: {tags}  |  Answers: {q.get('answer_count', 0)}")
 
                 if args.auto_answer:
