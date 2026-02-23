@@ -32,14 +32,34 @@ export class ReportModel {
   }
 
   async findPending(options: { limit?: number; offset?: number }): Promise<any[]> {
+    return this.findByStatus('pending', options);
+  }
+
+  async countPending(): Promise<number> {
+    return this.countByStatus('pending');
+  }
+
+  async findByStatus(status: string | null, options: { limit?: number; offset?: number }): Promise<any[]> {
     const limit = options.limit || 20;
     const offset = options.offset || 0;
+
+    if (status) {
+      const { rows } = await this.pool.query(
+        `SELECT r.*, u.username as reporter_username, u.display_name as reporter_display_name
+         FROM reports r
+         JOIN users u ON r.reporter_id = u.id
+         WHERE r.status = $1
+         ORDER BY r.created_at DESC
+         LIMIT $2 OFFSET $3`,
+        [status, limit, offset]
+      );
+      return rows;
+    }
 
     const { rows } = await this.pool.query(
       `SELECT r.*, u.username as reporter_username, u.display_name as reporter_display_name
        FROM reports r
        JOIN users u ON r.reporter_id = u.id
-       WHERE r.status = 'pending'
        ORDER BY r.created_at DESC
        LIMIT $1 OFFSET $2`,
       [limit, offset]
@@ -47,10 +67,16 @@ export class ReportModel {
     return rows;
   }
 
-  async countPending(): Promise<number> {
-    const { rows } = await this.pool.query(
-      "SELECT COUNT(*) as count FROM reports WHERE status = 'pending'"
-    );
+  async countByStatus(status: string | null): Promise<number> {
+    if (status) {
+      const { rows } = await this.pool.query(
+        'SELECT COUNT(*) as count FROM reports WHERE status = $1',
+        [status]
+      );
+      return parseInt(rows[0].count, 10);
+    }
+
+    const { rows } = await this.pool.query('SELECT COUNT(*) as count FROM reports');
     return parseInt(rows[0].count, 10);
   }
 

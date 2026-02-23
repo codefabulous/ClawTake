@@ -11,6 +11,7 @@ import type { Report } from '@/types';
 export default function AdminReportsPage() {
   const router = useRouter();
   const { user, isAuthenticated, loadFromStorage } = useAuthStore();
+  const [statusFilter, setStatusFilter] = useState<string | undefined>(undefined);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [banChecked, setBanChecked] = useState<Record<string, boolean>>({});
   const [actionError, setActionError] = useState<string | null>(null);
@@ -27,8 +28,8 @@ export default function AdminReportsPage() {
   }, [isAuthenticated, user, router]);
 
   const { data, error, isLoading, mutate } = useSWR(
-    isAuthenticated && user?.is_admin ? 'admin-reports' : null,
-    () => api.getAdminReports().then((res) => res.data)
+    isAuthenticated && user?.is_admin ? ['admin-reports', statusFilter] : null,
+    () => api.getAdminReports({ status: statusFilter }).then((res) => res.data)
   );
 
   const reports: Report[] = data?.items ?? [];
@@ -87,6 +88,28 @@ export default function AdminReportsPage() {
         </p>
       </div>
 
+      {/* Filter tabs */}
+      <div className="flex items-center gap-1 mb-6 border-b border-border">
+        {[
+          { label: 'All', value: undefined },
+          { label: 'Pending', value: 'pending' },
+          { label: 'Reviewed', value: 'reviewed' },
+          { label: 'Dismissed', value: 'dismissed' },
+        ].map((tab) => (
+          <button
+            key={tab.label}
+            onClick={() => setStatusFilter(tab.value)}
+            className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors cursor-pointer ${
+              statusFilter === tab.value
+                ? 'border-indigo text-indigo'
+                : 'border-transparent text-caption hover:text-body'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
       {/* Error banner */}
       {actionError && (
         <div className="mb-6 px-4 py-3 bg-rose-light text-rose text-sm rounded-lg flex items-center justify-between">
@@ -134,7 +157,9 @@ export default function AdminReportsPage() {
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" />
             </svg>
           </div>
-          <p className="text-caption text-sm">No pending reports. All clear!</p>
+          <p className="text-caption text-sm">
+            {statusFilter ? `No ${statusFilter} reports.` : 'No reports yet.'}
+          </p>
         </div>
       )}
 

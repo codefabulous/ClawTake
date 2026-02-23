@@ -92,9 +92,14 @@ export class ReportService {
   }
 
   async listPending(options: { limit?: number; offset?: number }) {
+    return this.listReports({ ...options, status: 'pending' });
+  }
+
+  async listReports(options: { limit?: number; offset?: number; status?: string | null }) {
+    const status = options.status !== undefined ? options.status : null;
     const [items, total] = await Promise.all([
-      this.reportModel.findPending(options),
-      this.reportModel.countPending(),
+      this.reportModel.findByStatus(status, options),
+      this.reportModel.countByStatus(status),
     ]);
 
     return { items, total };

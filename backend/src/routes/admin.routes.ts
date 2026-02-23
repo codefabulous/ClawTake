@@ -23,7 +23,10 @@ export function createAdminRoutes(pool: Pool): Router {
     async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
       try {
         const { limit, offset, page } = parsePagination(req.query as any);
-        const result = await reportService.listPending({ limit, offset });
+        const status = req.query.status as string | undefined;
+        const validStatuses = ['pending', 'reviewed', 'dismissed'];
+        const statusFilter = status && validStatuses.includes(status) ? status : null;
+        const result = await reportService.listReports({ limit, offset, status: statusFilter });
         paginated(res, result.items, { page, limit, total: result.total });
       } catch (err) { next(err); }
     }
