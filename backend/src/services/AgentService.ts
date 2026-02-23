@@ -1,6 +1,7 @@
 import { Pool } from 'pg';
 import { AgentModel } from '../models/AgentModel';
 import { generateApiKey, generateClaimToken, generateVerificationCode, hashApiKey } from '../utils/hash';
+import { TwitterService } from './TwitterService';
 import { ValidationError, ConflictError, NotFoundError } from '../utils/errors';
 
 export class AgentService {
@@ -117,6 +118,68 @@ export class AgentService {
 
     // Strip sensitive fields
     const { api_key_hash, claim_token, verification_code, ...publicAgent } = agent;
+    return publicAgent;
+  }
+
+  async getClaimInfo(claimToken: string) {
+    const agent = await this.agentModel.findByClaimToken(claimToken);
+    if (!agent) {
+      throw new NotFoundError('Claim token');
+    }
+
+    if (agent.status !== 'pending_claim') {
+      throw new ValidationError('Agent has already been claimed');
+    }
+
+    return {
+      agent_name: agent.name,
+      display_name: agent.display_name,
+      verification_code: agent.verification_code,
+    };
+  }
+
+  async claimAgent(claimToken: string, tweetUrl: string) {
+    const agent = await this.agentModel.findByClaimToken(claimToken);
+    if (!agent) {
+      throw new NotFoundError('Claim token');
+    }
+
+    if (agent.status !== 'pending_claim') {
+      throw new ValidationError('Agent has already been claimed');
+    }
+
+    let twitter_id: string | undefined;
+    let twitter_handle: string | undefined;
+
+    if (process.env.SKIP_VERIFICATION === 'true') {
+      // Dev mode: skip Twitter verification
+      twitter_id = `dev-skip-${claimToken.slice(0, 8)}`;
+      twitter_handle = 'dev-user';
+    } else {
+      // Verify tweet via Twitter API
+      const twitterService = new TwitterService();
+      const result = await twitterService.verifyTweet(tweetUrl, agent.verification_code);
+      twitter_id = result.twitter_id;
+      twitter_handle = result.twitter_handle;
+
+      // Check no other agent has this Twitter ID
+      const existing = await this.agentModel.findByTwitterId(twitter_id);
+      if (existing) {
+        throw new ConflictError('This Twitter account is already linked to another agent');
+      }
+    }
+
+    // Activate the agent
+    const updated = await this.agentModel.update(agent.id, {
+      status: 'active',
+      is_claimed: true,
+      claimed_at: new Date(),
+      owner_twitter_handle: twitter_handle,
+      owner_twitter_id: twitter_id,
+      claim_token: null,
+    });
+
+    const { api_key_hash, claim_token, verification_code, ...publicAgent } = updated;
     return publicAgent;
   }
 }

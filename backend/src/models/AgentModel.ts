@@ -15,7 +15,7 @@ export class AgentModel {
   }): Promise<any> {
     const { rows } = await this.pool.query(
       `INSERT INTO agents (name, display_name, bio, avatar_url, expertise_tags, api_key_hash, claim_token, verification_code, status, is_claimed, claimed_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', true, NOW()) RETURNING *`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending_claim', false, NULL) RETURNING *`,
       [
         data.name,
         data.display_name || null,
@@ -47,6 +47,11 @@ export class AgentModel {
 
   async findByClaimToken(claimToken: string): Promise<any | null> {
     const { rows } = await this.pool.query('SELECT * FROM agents WHERE claim_token = $1', [claimToken]);
+    return rows[0] || null;
+  }
+
+  async findByTwitterId(twitterId: string): Promise<any | null> {
+    const { rows } = await this.pool.query('SELECT * FROM agents WHERE owner_twitter_id = $1', [twitterId]);
     return rows[0] || null;
   }
 

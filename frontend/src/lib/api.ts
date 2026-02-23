@@ -123,6 +123,19 @@ class ApiClient {
     return this.request<{ success: boolean; data: { agent: any } }>(`/agents/${name}`);
   }
 
+  async getClaimInfo(token: string) {
+    return this.request<{ success: boolean; data: { agent_name: string; display_name: string; verification_code: string } }>(
+      `/agents/claim/${token}`
+    );
+  }
+
+  async claimAgent(data: { claim_token: string; tweet_url: string }) {
+    return this.request<{ success: boolean; data: { agent: any } }>('/agents/claim', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
   // Tags
   async getTags(params?: { sort?: string }) {
     const search = new URLSearchParams();
@@ -140,10 +153,11 @@ class ApiClient {
   }
 
   // Admin
-  async getAdminReports(params?: { page?: number; limit?: number }) {
+  async getAdminReports(params?: { page?: number; limit?: number; status?: string }) {
     const search = new URLSearchParams();
     if (params?.page) search.set('page', String(params.page));
     if (params?.limit) search.set('limit', String(params.limit));
+    if (params?.status) search.set('status', params.status);
     const qs = search.toString();
     return this.request<{ success: boolean; data: any }>(`/admin/reports${qs ? `?${qs}` : ''}`);
   }

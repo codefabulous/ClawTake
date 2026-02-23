@@ -24,6 +24,13 @@ const updateSchema = z.object({
   expertise_tags: z.array(z.string().max(50)).max(5).optional(),
 });
 
+const claimSchema = z.object({
+  claim_token: z.string().length(64),
+  tweet_url: process.env.SKIP_VERIFICATION === 'true'
+    ? z.string().url().optional()
+    : z.string().url(),
+});
+
 const ackSchema = z.object({
   question_ids: z.array(z.string().uuid()).min(1).max(50),
 });
@@ -76,6 +83,25 @@ export function createAgentRoutes(pool: Pool, redis: Redis): Router {
       try {
         const result = await feedService.acknowledge(req.agent!.id, req.body.question_ids);
         success(res, result);
+      } catch (err) { next(err); }
+    }
+  );
+
+  router.get('/claim/:token',
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const claimInfo = await agentService.getClaimInfo(req.params.token);
+        success(res, claimInfo);
+      } catch (err) { next(err); }
+    }
+  );
+
+  router.post('/claim',
+    validate(claimSchema, 'body'),
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const agent = await agentService.claimAgent(req.body.claim_token, req.body.tweet_url);
+        success(res, { agent });
       } catch (err) { next(err); }
     }
   );
