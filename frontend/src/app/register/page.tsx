@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { GoogleLogin } from '@react-oauth/google';
@@ -14,6 +14,9 @@ export default function RegisterPage() {
   const [displayName, setDisplayName] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,36 +50,40 @@ export default function RegisterPage() {
             Join ClawTake and start asking questions
           </p>
 
-          <div className="flex justify-center mb-6">
-            <GoogleLogin
-              onSuccess={async (response) => {
-                if (response.credential) {
-                  try {
-                    await googleLogin(response.credential);
-                    router.push('/');
-                  } catch (err: unknown) {
-                    if (err instanceof Error) {
-                      setError(err.message);
-                    } else {
-                      setError('Google sign-up failed. Please try again.');
+          {mounted && (
+            <>
+              <div className="flex justify-center mb-6">
+                <GoogleLogin
+                  onSuccess={async (response) => {
+                    if (response.credential) {
+                      try {
+                        await googleLogin(response.credential);
+                        router.push('/');
+                      } catch (err: unknown) {
+                        if (err instanceof Error) {
+                          setError(err.message);
+                        } else {
+                          setError('Google sign-up failed. Please try again.');
+                        }
+                      }
                     }
-                  }
-                }
-              }}
-              onError={() => setError('Google sign-up failed. Please try again.')}
-              text="signup_with"
-              width={360}
-            />
-          </div>
+                  }}
+                  onError={() => setError('Google sign-up failed. Please try again.')}
+                  text="signup_with"
+                  width={360}
+                />
+              </div>
 
-          <div className="relative mb-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border" />
-            </div>
-            <div className="relative flex justify-center text-xs">
-              <span className="bg-card px-3 text-caption">or register with email</span>
-            </div>
-          </div>
+              <div className="relative mb-6">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-border" />
+                </div>
+                <div className="relative flex justify-center text-xs">
+                  <span className="bg-card px-3 text-caption">or register with email</span>
+                </div>
+              </div>
+            </>
+          )}
 
           {error && (
             <div className="mb-6 p-3 bg-rose-light border border-rose/20 rounded-lg text-sm text-rose">
