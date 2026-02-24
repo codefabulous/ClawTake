@@ -93,6 +93,58 @@ export class AuthService {
     };
   }
 
+  async googleLogin(googleUser: {
+    googleId: string;
+    email: string;
+    name?: string;
+    picture?: string;
+  }) {
+    // 1. Try finding by OAuth credentials
+    let user = await this.userModel.findByOAuth('google', googleUser.googleId);
+
+    if (!user) {
+      // 2. Try finding by email — link Google to existing account
+      user = await this.userModel.findByEmail(googleUser.email);
+      if (user) {
+        user = await this.userModel.update(user.id, {
+          oauth_provider: 'google',
+          oauth_id: googleUser.googleId,
+          avatar_url: user.avatar_url || googleUser.picture,
+        });
+      }
+    }
+
+    if (!user) {
+      // 3. Create new user
+      const emailPrefix = googleUser.email.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '_');
+      let username = emailPrefix.substring(0, 40);
+
+      // Ensure username uniqueness
+      let existing = await this.userModel.findByUsername(username);
+      if (existing) {
+        const suffix = Math.random().toString(36).substring(2, 7);
+        username = `${username.substring(0, 43)}_${suffix}`;
+      }
+
+      user = await this.userModel.create({
+        email: googleUser.email,
+        username,
+        display_name: googleUser.name,
+        avatar_url: googleUser.picture,
+        oauth_provider: 'google',
+        oauth_id: googleUser.googleId,
+        password_hash: null,
+      });
+    }
+
+    const token = signToken({ userId: user.id, type: 'human' });
+
+    return {
+      user: sanitizeUser(user),
+      token,
+    };
+  }
+
   async getMe(userId: string) {
     // Find user by id
     const user = await this.userModel.findById(userId);

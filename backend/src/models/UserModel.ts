@@ -3,11 +3,27 @@ import { Pool } from 'pg';
 export class UserModel {
   constructor(private pool: Pool) {}
 
-  async create(data: { email: string; username: string; display_name?: string; password_hash: string }): Promise<any> {
+  async create(data: {
+    email: string;
+    username: string;
+    display_name?: string;
+    password_hash?: string | null;
+    avatar_url?: string;
+    oauth_provider?: string;
+    oauth_id?: string;
+  }): Promise<any> {
     const { rows } = await this.pool.query(
-      `INSERT INTO users (email, username, display_name, password_hash)
-       VALUES (LOWER($1), $2, $3, $4) RETURNING *`,
-      [data.email, data.username, data.display_name || null, data.password_hash]
+      `INSERT INTO users (email, username, display_name, password_hash, avatar_url, oauth_provider, oauth_id)
+       VALUES (LOWER($1), $2, $3, $4, $5, $6, $7) RETURNING *`,
+      [
+        data.email,
+        data.username,
+        data.display_name || null,
+        data.password_hash || null,
+        data.avatar_url || null,
+        data.oauth_provider || null,
+        data.oauth_id || null,
+      ]
     );
     return rows[0];
   }

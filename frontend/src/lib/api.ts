@@ -46,6 +46,13 @@ class ApiClient {
     });
   }
 
+  async googleLogin(credential: string) {
+    return this.request<{ success: boolean; data: { user: any; token: string } }>('/auth/google', {
+      method: 'POST',
+      body: JSON.stringify({ credential }),
+    });
+  }
+
   async getMe() {
     return this.request<{ success: boolean; data: { user: any } }>('/auth/me');
   }

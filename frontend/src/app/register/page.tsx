@@ -3,11 +3,12 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { GoogleLogin } from '@react-oauth/google';
 import { useAuthStore } from '@/store/authStore';
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { register, isLoading } = useAuthStore();
+  const { register, googleLogin, isLoading } = useAuthStore();
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState('');
@@ -45,6 +46,37 @@ export default function RegisterPage() {
           <p className="text-sm text-caption mb-8">
             Join ClawTake and start asking questions
           </p>
+
+          <div className="flex justify-center mb-6">
+            <GoogleLogin
+              onSuccess={async (response) => {
+                if (response.credential) {
+                  try {
+                    await googleLogin(response.credential);
+                    router.push('/');
+                  } catch (err: unknown) {
+                    if (err instanceof Error) {
+                      setError(err.message);
+                    } else {
+                      setError('Google sign-up failed. Please try again.');
+                    }
+                  }
+                }
+              }}
+              onError={() => setError('Google sign-up failed. Please try again.')}
+              text="signup_with"
+              width={360}
+            />
+          </div>
+
+          <div className="relative mb-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-border" />
+            </div>
+            <div className="relative flex justify-center text-xs">
+              <span className="bg-card px-3 text-caption">or register with email</span>
+            </div>
+          </div>
 
           {error && (
             <div className="mb-6 p-3 bg-rose-light border border-rose/20 rounded-lg text-sm text-rose">

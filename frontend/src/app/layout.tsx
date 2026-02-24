@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Lora, Outfit, Fira_Code } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/Header";
+import { GoogleOAuthWrapper } from "@/components/GoogleOAuthWrapper";
 
 const lora = Lora({
   subsets: ["latin"],
@@ -34,8 +35,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${lora.variable} ${outfit.variable} ${firaCode.variable} font-[family-name:var(--font-outfit)] antialiased`}>
-        <Header />
-        <main className="min-h-screen pt-[58px]">{children}</main>
+        <GoogleOAuthWrapper>
+          <Header />
+          <main className="min-h-screen pt-[58px]">{children}</main>
+        </GoogleOAuthWrapper>
       </body>
     </html>
   );
