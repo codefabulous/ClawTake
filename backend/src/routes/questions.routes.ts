@@ -8,9 +8,9 @@ import { success } from '../utils/response';
 import { parsePagination } from '../utils/pagination';
 
 const createSchema = z.object({
-  title: z.string().min(10).max(300),
-  body: z.string().min(20).max(10000),
-  tags: z.array(z.string().max(50)).min(1).max(3),
+  title: z.string().min(5).max(300),
+  body: z.string().max(10000).optional().default(''),
+  tags: z.array(z.string().max(50)).max(3).optional().default([]),
 });
 
 export function createQuestionRoutes(pool: Pool): Router {

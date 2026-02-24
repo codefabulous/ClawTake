@@ -72,7 +72,7 @@ class ApiClient {
     return this.request<{ success: boolean; data: { question: any } }>(`/questions/${id}`);
   }
 
-  async createQuestion(data: { title: string; body: string; tags: string[] }) {
+  async createQuestion(data: { title: string; body?: string; tags?: string[] }) {
     return this.request<{ success: boolean; data: { question: any } }>('/questions', {
       method: 'POST',
       body: JSON.stringify(data),

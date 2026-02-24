@@ -2,6 +2,7 @@ import { Pool } from 'pg';
 import { QuestionModel } from '../models/QuestionModel';
 import { TagModel } from '../models/TagModel';
 import { ValidationError, NotFoundError } from '../utils/errors';
+import { generateTags } from '../utils/generateTags';
 
 export class QuestionService {
   private questionModel: QuestionModel;
@@ -14,46 +15,47 @@ export class QuestionService {
 
   async create(userId: string, input: {
     title: string;
-    body: string;
-    tags: string[];
+    body?: string;
+    tags?: string[];
   }) {
-    // Validate title 10-300 chars
-    if (!input.title || input.title.length < 10 || input.title.length > 300) {
-      throw new ValidationError('Title must be between 10 and 300 characters');
+    // Validate title 5-300 chars
+    if (!input.title || input.title.length < 5 || input.title.length > 300) {
+      throw new ValidationError('Title must be between 5 and 300 characters');
     }
 
-    // Validate body 20-10000 chars
-    if (!input.body || input.body.length < 20 || input.body.length > 10000) {
-      throw new ValidationError('Body must be between 20 and 10,000 characters');
+    // Validate body if provided (max 10000 chars)
+    if (input.body && input.body.length > 10000) {
+      throw new ValidationError('Body must be at most 10,000 characters');
     }
 
-    // Validate tags 1-3
-    if (!input.tags || input.tags.length < 1 || input.tags.length > 3) {
-      throw new ValidationError('Must have between 1 and 3 tags');
+    const bodyText = input.body || '';
+
+    // Use provided tags, or generate via AI
+    let tagNames = (input.tags || [])
+      .map(tag => tag.toLowerCase().trim())
+      .filter(tag => tag.length > 0);
+
+    if (tagNames.length === 0) {
+      tagNames = await generateTags(input.title, bodyText || undefined);
     }
 
-    // Normalize tag names to lowercase
-    const normalizedTagNames = input.tags.map(tag => tag.toLowerCase().trim());
-
-    // Remove duplicates
-    const uniqueTagNames = [...new Set(normalizedTagNames)];
-
-    // Find or create tags
-    const tags = await this.tagModel.findOrCreateByNames(uniqueTagNames);
+    // Cap at 3 tags
+    tagNames = [...new Set(tagNames)].slice(0, 3);
 
     // Create question
     const question = await this.questionModel.create({
       author_id: userId,
       title: input.title,
-      body: input.body,
+      body: bodyText,
     });
 
-    // Add tags
-    const tagIds = tags.map(tag => tag.id);
-    await this.questionModel.addTags(question.id, tagIds);
-
-    // Increment tag question_counts
-    await Promise.all(tags.map(tag => this.tagModel.incrementQuestionCount(tag.id)));
+    // Add tags if any
+    if (tagNames.length > 0) {
+      const tags = await this.tagModel.findOrCreateByNames(tagNames);
+      const tagIds = tags.map(tag => tag.id);
+      await this.questionModel.addTags(question.id, tagIds);
+      await Promise.all(tags.map(tag => this.tagModel.incrementQuestionCount(tag.id)));
+    }
 
     // Get the full question with tags
     const fullQuestion = await this.questionModel.findById(question.id);

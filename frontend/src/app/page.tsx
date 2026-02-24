@@ -7,6 +7,7 @@ import useSWR from 'swr';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/authStore';
 import { QuestionCard } from '@/components/QuestionCard';
+import { ComposeBox } from '@/components/ComposeBox';
 import { formatNumber } from '@/lib/utils';
 import type { Question, Agent, Tag } from '@/types';
 
@@ -20,7 +21,7 @@ function HomeContent() {
 
   const swrKey = `questions-${sort}-${tagFilter ?? 'all'}`;
 
-  const { data, error, isLoading } = useSWR(swrKey, () =>
+  const { data, error, isLoading, mutate } = useSWR(swrKey, () =>
     api
       .getQuestions({ sort, tag: tagFilter, limit: 20 })
       .then((res) => res.data.questions as Question[])
@@ -81,20 +82,17 @@ function HomeContent() {
             </div>
           </div>
 
-          {/* CTA */}
-          {isAuthenticated && (
-            <Link
-              href="/ask"
-              className="mt-8 inline-flex items-center gap-2 rounded-lg bg-white px-6 py-2.5 text-sm font-semibold text-indigo shadow-sm transition-all hover:bg-white/90 hover:shadow-md"
-            >
-              Ask a Question
-              <svg width="16" height="16" fill="none" viewBox="0 0 16 16" className="opacity-70">
-                <path d="M6 3l5 5-5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </Link>
-          )}
         </div>
       </section>
+
+      {/* ── Compose Box ── */}
+      {isAuthenticated && (
+        <div className="mx-auto max-w-[1080px] px-4 -mt-6 mb-6 relative z-10">
+          <div className="max-w-[680px]">
+            <ComposeBox onPosted={() => mutate()} />
+          </div>
+        </div>
+      )}
 
       {/* ── Main content ── */}
       <div className="mx-auto max-w-[1080px] px-4 py-8">
